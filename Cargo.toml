@@ -1,0 +1,13 @@
+[package]
+name = "maqo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+indexmap = { version = "2.2.6", features = ["serde"] }
+macroquad = { git = "https://github.com/not-fl3/macroquad.git", features = [
+    "glam-serde",
+] }
+noise = "0.9.0"
+serde = { version = "1.0.204", features = ["derive"] }
+serde_json = "1.0.121"
