@@ -1,10 +1,10 @@
+use super::{BlockLoader, Face};
+use crate::util::{string::StrExt, vectors::Vec4Ext};
+use macroquad::{
+    color::{Color, WHITE},
+    models::Vertex,
+};
 use std::array;
-
-use macroquad::{color::{Color, WHITE}, models::Vertex};
-
-use crate::{util::{string::StrExt, vectors::Vec4Ext}, Minecraft};
-
-use super::Face;
 
 #[derive(Clone)]
 pub struct PartialModel {
@@ -13,14 +13,14 @@ pub struct PartialModel {
     pub ambient_occlusion: bool,
 }
 
-impl Minecraft {
-    pub fn load_partial_model(&self, tints: &[Color], name: &str) -> PartialModel {
-        let name = name.as_id();
+pub struct PartialModelLoader;
 
-        let block = self.blocks.get(&name).unwrap_or_else(|| {
+impl PartialModelLoader {
+    pub fn load(blocks: &BlockLoader, tints: &[Color], name: &str) -> PartialModel {
+        let block = blocks.get(&name.as_id()).unwrap_or_else(|| {
             panic!(
-                "failed to get block, available blocks: {:#?}",
-                self.blocks.keys().collect::<Vec<_>>()
+                "failed to get {name}, available blocks: {:#?}",
+                blocks.available()
             )
         });
 

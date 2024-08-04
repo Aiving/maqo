@@ -1,0 +1,13 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+indexmap = { workspace = true }
+macroquad = { workspace = true }
+noise = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+data = { path = "../data" }
+maqo-macros = { path = "../macros" }

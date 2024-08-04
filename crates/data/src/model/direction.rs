@@ -1,5 +1,5 @@
 use super::{Axis, AxisDirection};
-use macroquad::math::{i64vec3, vec2, I64Vec3, Vec2, Vec4};
+use macroquad::math::{ivec3, vec2, IVec3, Vec2, Vec4};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
@@ -72,16 +72,30 @@ impl Direction {
         }
     }
 
-    pub fn as_vec3(&self) -> I64Vec3 {
+    pub fn as_vec3(&self) -> IVec3 {
         use Direction::*;
 
         match self {
-            Top => i64vec3(0, 1, 0),
-            Bottom => i64vec3(0, -1, 0),
-            Front => i64vec3(0, 0, 1),
-            Back => i64vec3(0, 0, -1),
-            Right => i64vec3(1, 0, 0),
-            Left => i64vec3(-1, 0, 0),
+            Top => ivec3(0, 1, 0),
+            Bottom => ivec3(0, -1, 0),
+            Front => ivec3(0, 0, 1),
+            Back => ivec3(0, 0, -1),
+            Right => ivec3(1, 0, 0),
+            Left => ivec3(-1, 0, 0),
+        }
+    }
+
+    pub fn from_vec3(value: IVec3) -> Option<Self> {
+        use Direction::*;
+
+        match value.to_array() {
+            [0, 1, 0] => Some(Top),
+            [0, -1, 0] => Some(Bottom),
+            [0, 0, 1] => Some(Front),
+            [0, 0, -1] => Some(Back),
+            [1, 0, 0] => Some(Right),
+            [-1, 0, 0] => Some(Left),
+            _ => None,
         }
     }
 

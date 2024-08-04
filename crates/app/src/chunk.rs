@@ -1,5 +1,8 @@
-use macroquad::math::{ivec2, ivec3, IVec2, IVec3};
-use std::collections::HashMap;
+use macroquad::{
+    math::{ivec2, ivec3, IVec2, IVec3, Vec3},
+    models::Mesh,
+};
+use std::{cell::RefCell, collections::HashMap};
 // use crate::Model;
 
 #[derive(Copy, Clone)]
@@ -45,6 +48,7 @@ pub const EMPTY_CHUNK: &Chunk = &Chunk {
 pub struct ChunkColumn {
     pub chunks: Vec<Chunk>,
     pub biomes: [[BiomeId; SIZE]; SIZE],
+    pub buffers: [RefCell<Vec<(Vec3, Mesh)>>; SIZE],
 }
 
 #[derive(Default)]
@@ -61,6 +65,7 @@ impl ChunkManager {
     where
         F: FnMut(
             /*coords:*/ IVec3,
+            /*buffer:*/ &'a RefCell<Vec<(Vec3, Mesh)>>,
             /*chunks:*/ [[[&'a Chunk; 3]; 3]; 3],
             /*biomes:*/ [[Option<&'a [[BiomeId; SIZE]; SIZE]>; 3]; 3],
         ),
@@ -88,6 +93,7 @@ impl ChunkManager {
 
                 f(
                     ivec3(position.x, y as i32, position.y),
+                    &central.buffers[y],
                     chunks,
                     columns.map(|cz| cz.map(|cx| cx.map(|c| &c.biomes))),
                 )
@@ -101,11 +107,15 @@ impl ChunkManager {
 
     pub fn each_chunk<F>(&self, mut f: F)
     where
-        F: FnMut(/* position: */ IVec3, /* c: */ &Chunk),
+        F: FnMut(
+            /* position: */ IVec3,
+            /* chunk: */ &Chunk,
+            /* buffer: */ &RefCell<Vec<(Vec3, Mesh)>>,
+        ),
     {
         for (&position, c) in self.chunk_columns.iter() {
-            for (y, c) in c.chunks.iter().enumerate() {
-                f(ivec3(position.x, y as i32, position.y), c)
+            for (y, (c, b)) in c.chunks.iter().zip(c.buffers.iter()).enumerate() {
+                f(ivec3(position.x, y as i32, position.y), c, b)
             }
         }
     }

@@ -9,17 +9,58 @@ pub enum BlockStates {
     Multipart(Vec<Multipart>),
 }
 
-// enum ConditionValue {
-//     Bool(bool),
-//     Number(i64),
-//     Face(String),
-//     Facing(Direction)
-// }
+#[derive(Debug, PartialEq, Eq)]
+pub enum PropertyValue {
+    Number(i64),
+    Boolean(bool),
+    String(String),
+}
+
+impl From<i64> for PropertyValue {
+    fn from(value: i64) -> Self {
+        Self::Number(value)
+    }
+}
+
+impl From<bool> for PropertyValue {
+    fn from(value: bool) -> Self {
+        Self::Boolean(value)
+    }
+}
+
+impl From<String> for PropertyValue {
+    fn from(value: String) -> Self {
+        Self::String(value)
+    }
+}
+
+impl From<&str> for PropertyValue {
+    fn from(value: &str) -> Self {
+        Self::String(value.into())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Property {
+    pub value: PropertyValue,
+}
+
+impl Property {
+    pub fn new(default: PropertyValue) -> Self {
+        Self { value: default }
+    }
+}
+
+impl<T: Into<PropertyValue>> From<T> for Property {
+    fn from(value: T) -> Self {
+        Self::new(value.into())
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct VariantCondition {
     _properties: String,
-    pub properties: HashMap<String, String>,
+    pub properties: HashMap<String, Property>,
 }
 
 impl Hash for VariantCondition {
@@ -53,11 +94,24 @@ impl<'de> Deserialize<'de> for VariantCondition {
         let result = deserializer.deserialize_string(StringVisitor)?;
         let mut properties = HashMap::default();
 
+        if result.trim().is_empty() {
+            return Ok(Self {
+                _properties: result,
+                properties,
+            });
+        }
+
         for key_value in result.split(',') {
             let mut key_value = key_value.trim().split('=');
 
             if let (Some(key), Some(value)) = (key_value.next(), key_value.next()) {
-                properties.insert(key.trim().to_owned(), value.trim().to_owned());
+                let value = value
+                    .parse::<i64>()
+                    .map(PropertyValue::Number)
+                    .or_else(|_| value.parse::<bool>().map(PropertyValue::Boolean))
+                    .unwrap_or_else(|_| PropertyValue::String(value.to_string()));
+
+                properties.insert(key.trim().to_owned(), Property::new(value));
             } else {
                 return Err(serde::de::Error::custom(
                     "variant name must follow next syntax: key=value,key1=value",
@@ -82,8 +136,10 @@ pub enum Variant {
 #[derive(Debug, Deserialize)]
 pub struct Model {
     pub model: String,
-    pub x: Option<usize>,
-    pub y: Option<usize>,
+    #[serde(default)]
+    pub x: u16,
+    #[serde(default)]
+    pub y: u16,
     #[serde(default)]
     pub uvlock: bool,
 }
@@ -106,22 +162,4 @@ pub enum MultipartCondition {
 pub struct Multipart {
     pub when: MultipartCondition,
     pub apply: Model,
-}
-
-#[cfg(test)]
-mod tests {
-    use std::fs;
-
-    use super::BlockStates;
-
-    #[test]
-    fn test_parse() {
-        println!(
-            "{:#?}",
-            serde_json::from_slice::<'_, BlockStates>(
-                &fs::read("/run/media/aiving/Drive/dev/maqo/assets/blockstates/redstone_wire.json")
-                    .unwrap()
-            )
-        )
-    }
 }

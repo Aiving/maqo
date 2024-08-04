@@ -30,3 +30,17 @@ impl StrExt for &String {
         }
     }
 }
+
+impl StrExt for String {
+    fn strip_id(&self) -> &str {
+        self.strip_prefix("minecraft:").unwrap_or(self)
+    }
+
+    fn as_id(&self) -> String {
+        if self.starts_with("minecraft:") {
+            self.to_string()
+        } else {
+            format!("minecraft:{self}")
+        }
+    }
+}
